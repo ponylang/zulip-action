@@ -1,0 +1,19 @@
+{
+  "packages": [
+    "zulip_action"
+  ],
+  "info": {
+    "description": "A GitHub action for interacting with Zulip",
+    "homepage": "https://github.com/ponylang/zulip-action",
+    "license": "BSD-2-Clause",
+    "documentation_url": "",
+    "version": "0.0.0",
+    "name": "zulip-action"
+  },
+  "deps": [
+    {
+      "locator": "github.com/ponylang/ssl.git",
+      "version": "2.0.0"
+    }
+  ]
+}
