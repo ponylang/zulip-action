@@ -23,7 +23,7 @@ else
 	PONYC = $(COMPILE_WITH) --debug
 endif
 
-ifeq (,$(filter $(MAKECMDGOALS),clean TAGS))
+ifeq (,$(filter $(MAKECMDGOALS),clean TAGS docker push))
   ifeq ($(ssl), 3.0.x)
           SSL = -Dopenssl_3.0.x
   else ifeq ($(ssl), 1.1.x)
