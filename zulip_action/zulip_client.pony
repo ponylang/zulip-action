@@ -19,6 +19,7 @@ actor ZulipClient is courier.HTTPClientConnectionActor
   var _collector: courier.ResponseCollector = courier.ResponseCollector
   let _input: Input val
   let _notify: ResultNotify tag
+  var _notified: Bool = false
 
   new create(
     auth: lori.TCPConnectAuth,
@@ -70,6 +71,7 @@ actor ZulipClient is courier.HTTPClientConnectionActor
   fun ref on_connection_failure(
     reason: courier.ConnectionFailureReason)
   =>
+    _notified = true
     let detail =
       match \exhaustive\ reason
       | courier.ConnectionFailedDNS => "DNS resolution failed"
@@ -86,6 +88,7 @@ actor ZulipClient is courier.HTTPClientConnectionActor
     _collector.add_chunk(data)
 
   fun ref on_response_complete() =>
+    _notified = true
     try
       let response = _collector.build()?
       match courier.DecodeJSON[ZulipResponse](
@@ -116,7 +119,20 @@ actor ZulipClient is courier.HTTPClientConnectionActor
     _http.close()
 
   fun ref on_parse_error(err: courier.ParseError) =>
+    _notified = true
     _notify.failure("HTTP parse error")
+
+  fun ref on_closed() =>
+    """
+    Called when the connection closes for any reason. If the result has
+    already been reported via another callback, this is a no-op.
+    Otherwise, the connection was lost before a complete response was
+    received.
+    """
+    if not _notified then
+      _notified = true
+      _notify.failure("Connection closed unexpectedly")
+    end
 
   fun _build_params(): Array[(String, String)] val =>
     """

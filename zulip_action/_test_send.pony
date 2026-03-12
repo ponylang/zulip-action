@@ -5,6 +5,7 @@ primitive \nodoc\ _TestSendSuite
   fun tests(test: PonyTest) =>
     test(_TestSendSuccess)
     test(_TestSendApiError)
+    test(_TestSendConnectionDrop)
 
 class \nodoc\ iso _TestSendSuccess is UnitTest
   fun name(): String => "send/success via mock server"
@@ -99,5 +100,62 @@ actor \nodoc\ _SendTestOrchestrator is
   fun ref _dispose() =>
     match _server
     | let s: _MockZulipServer => s.dispose()
+    end
+    _h.complete(true)
+
+class \nodoc\ iso _TestSendConnectionDrop is UnitTest
+  fun name(): String => "send/connection drop before response"
+
+  fun ref apply(h: TestHelper) =>
+    h.long_test(5_000_000_000)
+    _DropTestOrchestrator(h)
+
+actor \nodoc\ _DropTestOrchestrator is
+  (ResultNotify & _MockServerNotify)
+  """
+  Coordinates a connection-drop integration test.
+
+  Creates a mock server that closes connections immediately, then
+  creates a ZulipClient that connects to it. Verifies the client
+  reports a failure via `on_closed()`.
+  """
+  let _h: TestHelper
+  var _server: (_MockDropServer | None) = None
+
+  new create(h: TestHelper) =>
+    _h = h
+    let auth = lori.TCPListenAuth(h.env.root)
+    _server = _MockDropServer(auth, this)
+
+  be server_listening(port: U16) =>
+    let input = Input._create(
+      "test-api-key",
+      "bot@example.com",
+      "http://127.0.0.1:" + port.string(),
+      "test-stream",
+      "stream",
+      "test-topic",
+      "Hello from test")
+    let auth = lori.TCPConnectAuth(_h.env.root)
+    ZulipClient._test_plain(
+      auth, "127.0.0.1", port.string(), input, this)
+
+  be server_listen_failed() =>
+    _h.fail("mock server failed to listen")
+    _h.complete(true)
+
+  be success(id: String) =>
+    _h.fail("expected failure but got success with id: " + id)
+    _dispose()
+
+  be failure(msg: String) =>
+    _h.assert_true(
+      msg.contains("Connection closed unexpectedly"),
+      "expected 'Connection closed unexpectedly' but got: " + msg)
+    _dispose()
+
+  fun ref _dispose() =>
+    match _server
+    | let s: _MockDropServer => s.dispose()
     end
     _h.complete(true)

@@ -43,6 +43,53 @@ actor _MockZulipServer is lori.TCPListenerActor
   fun ref _on_accept(fd: U32): _MockZulipConnection =>
     _MockZulipConnection(_server_auth, fd, _response_body)
 
+actor _MockDropServer is lori.TCPListenerActor
+  """
+  Mock server that accepts TCP connections and closes them immediately
+  without sending a response. Used to test the client's `on_closed()`
+  handler when the connection drops unexpectedly.
+  """
+  var _tcp_listener: lori.TCPListener = lori.TCPListener.none()
+  let _server_auth: lori.TCPServerAuth
+  let _notify: _MockServerNotify tag
+
+  new create(
+    auth: lori.TCPListenAuth,
+    notify: _MockServerNotify tag)
+  =>
+    _server_auth = lori.TCPServerAuth(auth)
+    _notify = notify
+    _tcp_listener = lori.TCPListener(auth, "127.0.0.1", "0", this)
+
+  fun ref _listener(): lori.TCPListener => _tcp_listener
+
+  fun ref _on_listening() =>
+    _notify.server_listening(
+      _tcp_listener.local_address().port())
+
+  fun ref _on_listen_failure() =>
+    _notify.server_listen_failed()
+
+  fun ref _on_accept(fd: U32): _MockDropConnection =>
+    _MockDropConnection(_server_auth, fd)
+
+actor _MockDropConnection is
+  (lori.TCPConnectionActor & lori.ServerLifecycleEventReceiver)
+  """
+  Server-side connection that closes immediately after accepting,
+  without sending any response data.
+  """
+  var _conn: lori.TCPConnection = lori.TCPConnection.none()
+
+  new create(auth: lori.TCPServerAuth, fd: U32) =>
+    _conn = lori.TCPConnection.server(auth, fd, this, this)
+    _close_now()
+
+  be _close_now() =>
+    _conn.close()
+
+  fun ref _connection(): lori.TCPConnection => _conn
+
 actor _MockZulipConnection is
   (lori.TCPConnectionActor & lori.ServerLifecycleEventReceiver)
   """

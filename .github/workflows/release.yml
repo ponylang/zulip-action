@@ -8,6 +8,7 @@ on:
 concurrency: release
 
 permissions:
+  contents: read
   packages: write
 
 jobs:
