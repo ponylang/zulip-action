@@ -1,4 +1,5 @@
 config ?= release
+static ?= false
 
 PACKAGE := zulip_action
 GET_DEPENDENCIES_WITH := corral fetch
@@ -8,6 +9,7 @@ COMPILE_WITH := corral run -- ponyc
 BUILD_DIR ?= build/$(config)
 SRC_DIR := $(PACKAGE)
 tests_binary := $(BUILD_DIR)/$(PACKAGE)
+action_binary := $(BUILD_DIR)/action
 
 ifdef config
 	ifeq (,$(filter $(config),debug release))
@@ -35,7 +37,12 @@ endif
 
 PONYC := $(PONYC) $(SSL)
 
+ifeq ($(static),true)
+	PONYC += --static
+endif
+
 SOURCE_FILES := $(shell find $(SRC_DIR) -name *.pony)
+ACTION_SOURCE_FILES := $(shell find action -name *.pony) $(SOURCE_FILES)
 
 test: unit-tests
 
@@ -45,6 +52,12 @@ unit-tests: $(tests_binary)
 $(tests_binary): $(SOURCE_FILES) | $(BUILD_DIR)
 	$(GET_DEPENDENCIES_WITH)
 	$(PONYC) -o $(BUILD_DIR) $(SRC_DIR)
+
+build-action: $(action_binary)
+
+$(action_binary): $(ACTION_SOURCE_FILES) | $(BUILD_DIR)
+	$(GET_DEPENDENCIES_WITH)
+	$(PONYC) -o $(BUILD_DIR) action
 
 clean:
 	$(CLEAN_DEPENDENCIES_WITH)
@@ -58,4 +71,21 @@ all: test
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-.PHONY: all clean TAGS test
+IMAGE := ponylang/zulip-action
+
+ifndef tag
+  IMAGE_TAG := $(shell cat VERSION)
+else
+  IMAGE_TAG := $(tag)
+endif
+
+docker: action.yml Dockerfile Makefile $(ACTION_SOURCE_FILES)
+	docker build --pull -t "ghcr.io/$(IMAGE):$(IMAGE_TAG)" .
+	docker build --pull -t "ghcr.io/$(IMAGE):latest" .
+	touch $@
+
+push: docker
+	docker push "ghcr.io/$(IMAGE):$(IMAGE_TAG)"
+	docker push "ghcr.io/$(IMAGE):latest"
+
+.PHONY: all clean TAGS test unit-tests build-action push

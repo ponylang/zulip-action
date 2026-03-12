@@ -1,0 +1,30 @@
+name: 'Zulip Send Message'
+branding:
+  icon: 'mail'
+  color: 'gray-dark'
+description: 'Sends a message to Zulip'
+inputs:
+  api-key:
+    description: 'Zulip bot API key'
+    required: true
+  email:
+    description: 'Email of the bot that owns the API key'
+    required: true
+  organization-url:
+    description: 'Zulip organization URL (e.g., https://myorg.zulipchat.com)'
+    required: true
+  to:
+    description: 'Stream name/ID (for stream/channel) or comma-separated user IDs/emails (for private/direct)'
+    required: true
+  type:
+    description: 'Message type: stream, channel, private, or direct'
+    required: true
+  topic:
+    description: 'Message topic (required for stream/channel messages)'
+    required: false
+  content:
+    description: 'Message content'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
