@@ -1,4 +1,5 @@
 FROM ghcr.io/ponylang/shared-docker-ci-standard-builder-with-libressl-4.2.0:release AS build
+LABEL org.opencontainers.image.source="https://github.com/ponylang/zulip-action"
 
 WORKDIR /src
 COPY . .
