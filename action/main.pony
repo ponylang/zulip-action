@@ -7,7 +7,7 @@ use ssl = "ssl/net"
 
 actor \nodoc\ Main
   new create(env: Env) =>
-    let vars = _parse_env_vars(env.vars())
+    let vars = _parse_env_vars(env.vars)
     match zulip.InputParser(vars)
     | let input: zulip.Input =>
       match courier.URL.parse(input.organization_url)

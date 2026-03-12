@@ -26,3 +26,13 @@ jobs:
       - uses: actions/checkout@v6.0.2
       - name: Test
         run: make test ssl=libressl config=debug
+      - name: Build action binary
+        run: make build-action ssl=libressl config=debug
+
+  docker-build:
+    name: Verify Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - name: Build Docker image
+        run: docker build .
