@@ -27,5 +27,5 @@ inputs:
     required: true
 name: Zulip Send Message
 runs:
-  image: docker://ghcr.io/ponylang/zulip-action:0.1.0
+  image: docker://ghcr.io/ponylang/zulip-action:0.0.0
   using: docker
