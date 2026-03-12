@@ -121,6 +121,7 @@ actor ZulipClient is courier.HTTPClientConnectionActor
   fun ref on_parse_error(err: courier.ParseError) =>
     _notified = true
     _notify.failure("HTTP parse error")
+    _http.close()
 
   fun ref on_closed() =>
     """
