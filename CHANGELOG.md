@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file. This projec
 
 ### Fixed
 
+- Fix connection hang on exit ([PR #9](https://github.com/ponylang/zulip-action/pull/9))
+- Fix TLS certificate verification accepting empty certificate names ([PR #9](https://github.com/ponylang/zulip-action/pull/9))
+- Fix connection resource leak on early close ([PR #9](https://github.com/ponylang/zulip-action/pull/9))
 
 ### Added
 
