@@ -77,6 +77,7 @@ actor ZulipClient is courier.HTTPClientConnectionActor
       | courier.ConnectionFailedDNS => "DNS resolution failed"
       | courier.ConnectionFailedTCP => "TCP connection failed"
       | courier.ConnectionFailedSSL => "SSL handshake failed"
+      | courier.ConnectionFailedTimeout => "Connection timed out"
       end
     _notify.failure("Connection failed: " + detail)
 
