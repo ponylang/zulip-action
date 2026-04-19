@@ -1,4 +1,4 @@
-FROM ghcr.io/ponylang/shared-docker-ci-standard-builder-with-libressl-4.2.0:release AS build
+FROM ghcr.io/ponylang/shared-docker-ci-standard-builder-with-libressl-4.2.1:release AS build
 
 WORKDIR /src
 COPY . .
